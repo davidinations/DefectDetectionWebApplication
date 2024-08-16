@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Stitch Detection Globalindo Intimates</title>
+	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+	<style>
+		/* CSS Reset */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			min-height: 100vh;
+			background-color: #f0f0f0;
+			font-family: Arial, sans-serif;
+		}
+
+		header {
+			background-color: #007BFF;
+			color: #fff;
+			padding: 20px;
+			width: 100%;
+			text-align: center;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			margin-bottom: 20px;
+			position: sticky;
+			top: 0;
+			z-index: 1000;
+		}
+
+		header h1 {
+			font-size: 2em;
+			font-weight: bold;
+		}
+
+		input[type="file"] {
+			margin: 20px 0;
+			padding: 10px;
+			border: 2px solid #007BFF;
+			border-radius: 5px;
+			background-color: #fff;
+			cursor: pointer;
+			transition: background-color 0.3s, border-color 0.3s;
+		}
+
+		input[type="file"]:hover {
+			background-color: #007BFF;
+			color: #fff;
+		}
+
+		#countDisplay {
+			margin: 10px 0;
+			padding: 10px;
+			border: 2px solid #28a745;
+			border-radius: 5px;
+			background-color: #fff;
+			color: #28a745;
+			font-weight: bold;
+		}
+
+		canvas {
+			display: block;
+			border: 1px solid #000;
+			margin-top: 10px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			border-radius: 10px;
+			margin-bottom: 20px;
+		}
+
+		/* Loading Spinner */
+		#loadingSpinner {
+			display: none;
+			border: 8px solid #f3f3f3;
+			border-top: 8px solid #007BFF;
+			border-radius: 50%;
+			width: 50px;
+			height: 50px;
+			animation: spin 1s linear infinite;
+			margin-top: 20px;
+		}
+
+		@keyframes spin {
+			0% {
+				transform: rotate(0deg);
+			}
+
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+
+		table {
+			width: 80%;
+			border-collapse: collapse;
+			margin-top: 20px;
+		}
+
+		th,
+		td {
+			border: 1px solid #ddd;
+			padding: 8px;
+			text-align: left;
+		}
+
+		th {
+			background-color: #007BFF;
+			color: white;
+		}
+
+		img {
+			max-width: 100px;
+			height: auto;
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+		<h1>Welcome to Stitch Detection Globalindo Intimates</h1>
+	</header>
+	<input id="uploadInput" type="file" accept="image/*" />
+	<div id="countDisplay"></div>
+	<div id="loadingSpinner"></div>
+	<canvas></canvas>
+	<!-- <table id="historyTable">
+		<thead>
+			<tr>
+				<th>Upload</th>
+				<th>Result</th>
+				<th>Count</th>
+				<th>Time</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table> -->
+	<script>
+		const input = document.getElementById("uploadInput");
+		const loadingSpinner = document.getElementById("loadingSpinner");
+		input.addEventListener("change", async (event) => {
+			const file = event.target.files[0];
+			if (!file) {
+				return; // Exit if no file is chosen
+			}
+			loadingSpinner.style.display = "block"; // Show spinner
+			const data = new FormData();
+			data.append("image_file", file, "image_file");
+			const response = await fetch("/detect", {
+				method: "post",
+				body: data
+			});
+			const { count, boxes } = await response.json();
+			draw_image_and_boxes(file, boxes);
+			document.getElementById("countDisplay").innerText = `${count}`;
+			loadingSpinner.style.display = "none"; // Hide spinner
+		});
+
+		function draw_image_and_boxes(file, boxes) {
+			const img = new Image();
+			img.src = URL.createObjectURL(file);
+			img.onload = () => {
+				const canvas = document.querySelector("canvas");
+				const ctx = canvas.getContext("2d");
+				// Define fixed canvas size
+				const fixedWidth = 400;
+				const fixedHeight = 400;
+				// Calculate scaling factor
+				const scale = Math.min(fixedWidth / img.width, fixedHeight / img.height);
+				// Set canvas size
+				canvas.width = fixedWidth;
+				canvas.height = fixedHeight;
+				// Draw scaled image
+				const scaledWidth = img.width * scale;
+				const scaledHeight = img.height * scale;
+				const offsetX = (fixedWidth - scaledWidth) / 2;
+				const offsetY = (fixedHeight - scaledHeight) / 2;
+				ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+				ctx.strokeStyle = "#00FF00";
+				ctx.lineWidth = 3;
+				ctx.font = "18px serif";
+				boxes.forEach(([x1, y1, x2, y2, label]) => {
+					// Scale bounding box coordinates
+					x1 = x1 * scale + offsetX;
+					y1 = y1 * scale + offsetY;
+					x2 = x2 * scale + offsetX;
+					y2 = y2 * scale + offsetY;
+					// Draw bounding box
+					ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+					ctx.fillStyle = "#00ff00"; // Set Green In Hexadecimal RGB (00-FF)
+					// // Draw label
+					// const width = ctx.measureText(label).width;
+					// ctx.fillRect(x1, y1, width + 3, 24);
+					// ctx.fillStyle = "#000000";
+					// ctx.fillText(label, x1, y1 + 5);
+				});
+			}
+		}
+	</script>
+</body>
+
+</html>

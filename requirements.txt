@@ -1,4 +1,4 @@
 Flask==3.0.3
-Pillow==10.3.0
+Pillow==10.4.0
 ultralytics==8.2.20
 waitress==3.0.0
